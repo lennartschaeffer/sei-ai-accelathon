@@ -1,5 +1,6 @@
 from config.settings import STABLECOIN_ADDRESSES, USDC_DECIMALS
 from core.utils import extract_address_from_topic, format_transfer_output
+from datetime import datetime
 
 class TransactionAnalyzer:
     def __init__(self):
@@ -19,7 +20,8 @@ class TransactionAnalyzer:
             "to_address": to_addr,
             "value": value,
             "block_number": log["blockNumber"],
-            "log_index": log["logIndex"]
+            "log_index": log["logIndex"],
+            "timestamp": datetime.now()
         }
     
     def analyze_transaction_logs(self, logs, tx_hash):
