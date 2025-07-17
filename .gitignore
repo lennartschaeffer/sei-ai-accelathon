@@ -1,3 +1,6 @@
 steps.md
 .env
 node_modules
+venv
+__pycache__
+CLAUDE.md
