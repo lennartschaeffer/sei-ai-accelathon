@@ -27,3 +27,19 @@ class MCPClient:
         )
         text_content = TextContent.model_validate(result.content[0]).text
         return json.loads(text_content)
+    
+    async def get_token_balance(self, wallet_address, token_address):
+        result = await self.session.call_tool(
+            "get_token_balance",
+            arguments={"ownerAddress": wallet_address, "tokenAddress": token_address, "network": NETWORK}
+        )
+        text_content = TextContent.model_validate(result.content[0]).text
+        return json.loads(text_content)
+    
+    async def get_token_info(self, token_address):
+        result = await self.session.call_tool(
+            "get_token_info",
+            arguments={"tokenAddress": token_address, "network": NETWORK}
+        )
+        text_content = TextContent.model_validate(result.content[0]).text
+        return json.loads(text_content)
