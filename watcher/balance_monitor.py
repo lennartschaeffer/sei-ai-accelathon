@@ -47,14 +47,6 @@ class BalanceMonitor:
         
         return balance_updates
     
-    async def get_token_info(self, token_address: str) -> Optional[Dict]:
-        try:
-            token_info = await self.mcp_client.get_token_info(token_address)
-            return token_info
-        except Exception as e:
-            print(f"Error getting token info for {token_address}: {e}")
-            return None
-    
     def get_wallet_balance(self, wallet_address: str) -> Optional[Dict]:
         return self.wallet_balances.get(wallet_address.lower())
     

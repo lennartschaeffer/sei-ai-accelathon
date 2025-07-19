@@ -36,10 +36,8 @@ class MCPClient:
         text_content = TextContent.model_validate(result.content[0]).text
         return json.loads(text_content)
     
-    async def get_token_info(self, token_address):
-        result = await self.session.call_tool(
-            "get_token_info",
-            arguments={"tokenAddress": token_address, "network": NETWORK}
-        )
-        text_content = TextContent.model_validate(result.content[0]).text
-        return json.loads(text_content)
+    async def list_available_tools(self):
+        """List all available tools from the MCP server"""
+        result = await self.session.list_tools()
+        print(result)
+        return result.tools
