@@ -27,6 +27,14 @@ class MCPClient:
         )
         text_content = TextContent.model_validate(result.content[0]).text
         return json.loads(text_content)
+
+    async def get_transaction(self, tx_hash):
+        result = await self.session.call_tool(
+            "get_transaction",
+            arguments={"txHash": tx_hash, "network": NETWORK}
+        )
+        text_content = TextContent.model_validate(result.content[0]).text
+        return json.loads(text_content)
     
     async def get_token_balance(self, wallet_address, token_address):
         result = await self.session.call_tool(
@@ -39,5 +47,5 @@ class MCPClient:
     async def list_available_tools(self):
         """List all available tools from the MCP server"""
         result = await self.session.list_tools()
-        print(result)
+        print(result.tools)
         return result.tools
