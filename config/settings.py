@@ -16,6 +16,13 @@ BALANCE_CHECK_THRESHOLD = 100.0
 BALANCE_MONITORING_ENABLED = True
 BALANCE_CHECK_INTERVAL_BLOCKS = 5
 
+# Event Bus Settings
+EVENT_BUS_ENABLED = True
+EVENT_BUS_AUTO_START = True
+AI_ANALYSIS_ENABLED = False  # For Phase 1, will be enabled in Phase 2
+EVENT_QUEUE_MAX_SIZE = 1000
+EVENT_PROCESSING_TIMEOUT = 30
+
 SERVER_PARAMS = StdioServerParameters(
     command="npx",
     args=["-y", "@sei-js/mcp-server"],

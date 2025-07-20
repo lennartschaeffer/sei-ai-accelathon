@@ -3,7 +3,7 @@ from watcher.transaction_analyzer import TransactionAnalyzer
 from watcher.whale_tracker import WhaleTracker
 from watcher.balance_monitor import BalanceMonitor
 from core.utils import format_whale_event
-from config.settings import BALANCE_MONITORING_ENABLED, BALANCE_CHECK_INTERVAL_BLOCKS
+from config.settings import BALANCE_MONITORING_ENABLED, BALANCE_CHECK_INTERVAL_BLOCKS, EVENT_BUS_ENABLED, EVENT_BUS_AUTO_START
 
 class BlockProcessor:
     def __init__(self, mcp_client: MCPClient):
@@ -13,6 +13,41 @@ class BlockProcessor:
         self.balance_monitor = BalanceMonitor(mcp_client)
         self.last_block_number = None
         self.blocks_since_balance_check = 0
+        self.event_bus = None
+        self.concurrent_events = []
+        
+        if EVENT_BUS_ENABLED:
+            self._initialize_event_bus()
+    
+    def _initialize_event_bus(self):
+        """Initialize event bus connection"""
+        try:
+            from core.event_bus import event_bus
+            from core.risk_calculator import risk_calculator
+            from agents.mock_agent import setup_mock_agent
+            
+            self.event_bus = event_bus
+            self.risk_calculator = risk_calculator
+            
+            # Set up mock agent for Phase 1 testing
+            self.mock_agent = setup_mock_agent()
+            
+            print("Event bus initialized in BlockProcessor")
+        except ImportError:
+            print("Warning: Event bus not available")
+            self.event_bus = None
+    
+    async def start_event_processing(self):
+        """Start event bus processing if enabled"""
+        if self.event_bus and EVENT_BUS_AUTO_START:
+            await self.event_bus.start_processing()
+            print("Event bus processing started")
+    
+    async def stop_event_processing(self):
+        """Stop event bus processing"""
+        if self.event_bus:
+            await self.event_bus.stop_processing()
+            print("Event bus processing stopped")
     
     async def get_latest_block_number(self):
         latest_block_data = await self.mcp_client.get_latest_block()

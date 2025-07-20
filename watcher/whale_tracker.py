@@ -1,11 +1,27 @@
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
-from config.settings import WHALE_SINGLE_TX_THRESHOLD, WHALE_VOLUME_THRESHOLD, WHALE_TIME_WINDOW_MINUTES
+from config.settings import WHALE_SINGLE_TX_THRESHOLD, WHALE_VOLUME_THRESHOLD, WHALE_TIME_WINDOW_MINUTES, EVENT_BUS_ENABLED
+import asyncio
+import time
 
 class WhaleTracker:
     def __init__(self):
         self.wallet_activity = {}
         self.whale_events = []
+        self.event_bus = None
+        if EVENT_BUS_ENABLED:
+            self._initialize_event_bus()
+    
+    def _initialize_event_bus(self):
+        """Initialize event bus connection"""
+        try:
+            from core.event_bus import event_bus
+            from core.risk_calculator import risk_calculator
+            self.event_bus = event_bus
+            self.risk_calculator = risk_calculator
+        except ImportError:
+            print("Warning: Event bus not available")
+            self.event_bus = None
     
     def _clean_old_activity(self, current_time: datetime):
         cutoff_time = current_time - timedelta(minutes=WHALE_TIME_WINDOW_MINUTES)
@@ -79,11 +95,49 @@ class WhaleTracker:
         
         if whale_event:
             self.whale_events.append(whale_event)
+            
+            # Publish event to event bus if available
+            if self.event_bus and hasattr(self, 'risk_calculator'):
+                self._publish_whale_event(whale_event)
         
         return whale_event
     
     def get_recent_whale_events(self, limit: int = 10) -> List[Dict]:
         return self.whale_events[-limit:] if self.whale_events else []
+    
+    def _publish_whale_event(self, whale_event: Dict):
+        """Publish whale event to event bus"""
+        try:
+            from core.events import WhaleActivityEventData, EventTypes
+            from core.event_bus import Event
+            
+            # Convert whale event to structured data
+            event_data = WhaleActivityEventData(
+                wallet_address=whale_event['wallet_address'],
+                tx_hash=whale_event['tx_hash'],
+                amount=whale_event['amount'],
+                direction=whale_event['direction'],
+                event_type=whale_event['event_type'],
+                total_volume=whale_event['total_volume'],
+                timestamp=whale_event['timestamp']
+            )
+            
+            # Calculate priority
+            priority = self.risk_calculator.calculate_whale_priority(whale_event)
+            
+            # Create and publish event
+            event = Event(
+                event_type=EventTypes.WHALE_ACTIVITY,
+                data=event_data.to_dict(),
+                priority=priority,
+                timestamp=time.time()
+            )
+            
+            # Schedule async publish (will be handled by event loop)
+            asyncio.create_task(self.event_bus.publish(event))
+            
+        except Exception as e:
+            print(f"Error publishing whale event: {e}")
     
     def clear_old_events(self, keep_last: int = 100):
         if len(self.whale_events) > keep_last:

@@ -9,9 +9,16 @@ async def watcher_agent(session: ClientSession):
     mcp_client = MCPClient(session)
     block_processor = BlockProcessor(mcp_client)
     
-    while True:
-        await block_processor.process_new_blocks()
-        await asyncio.sleep(POLL_INTERVAL)
+    # Start event bus processing
+    await block_processor.start_event_processing()
+    
+    try:
+        while True:
+            await block_processor.process_new_blocks()
+            await asyncio.sleep(POLL_INTERVAL)
+    finally:
+        # Clean up event bus processing
+        await block_processor.stop_event_processing()
 
 async def run():
     async with stdio_client(SERVER_PARAMS) as (read, write):
