@@ -1,30 +1,25 @@
-from mcp import ClientSession
-from mcp.client.stdio import stdio_client
 import asyncio
-from config.settings import SERVER_PARAMS, POLL_INTERVAL
-from core.mcp_client import MCPClient
+from config.settings import POLL_INTERVAL, SEI_RPC_URL
+from core.rpc_client import RPCClient
 from watcher.block_processor import BlockProcessor
 
-async def watcher_agent(session: ClientSession):
-    mcp_client = MCPClient(session)
-    block_processor = BlockProcessor(mcp_client)
+async def watcher_agent():
+    async with RPCClient(SEI_RPC_URL) as rpc_client:
+        block_processor = BlockProcessor(rpc_client)
     
-    # Start event bus processing
-    await block_processor.start_event_processing()
-    
-    try:
-        while True:
-            await block_processor.process_new_blocks()
-            await asyncio.sleep(POLL_INTERVAL)
-    finally:
-        # Clean up event bus processing
-        await block_processor.stop_event_processing()
+        # Start event bus processing
+        await block_processor.start_event_processing()
+        
+        try:
+            while True:
+                await block_processor.process_new_blocks()
+                await asyncio.sleep(POLL_INTERVAL)
+        finally:
+            # Clean up event bus processing
+            await block_processor.stop_event_processing()
 
 async def run():
-    async with stdio_client(SERVER_PARAMS) as (read, write):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
-            await watcher_agent(session)
+    await watcher_agent()
 
 
 if __name__ == "__main__":

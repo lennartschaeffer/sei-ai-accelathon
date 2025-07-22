@@ -1,13 +1,13 @@
 from typing import Dict, List, Optional
 from datetime import datetime
-from core.mcp_client import MCPClient
+from core.rpc_client import RPCClient
 from config.settings import STABLECOIN_ADDRESSES, USDC_DECIMALS, EVENT_BUS_ENABLED
 import asyncio
 import time
 
 class BalanceMonitor:
-    def __init__(self, mcp_client: MCPClient):
-        self.mcp_client = mcp_client
+    def __init__(self, rpc_client: RPCClient):
+        self.rpc_client = rpc_client
         self.monitored_wallets = set()
         self.wallet_balances = {}
         self.previous_balances = {}
@@ -35,7 +35,7 @@ class BalanceMonitor:
     
     async def check_wallet_balance(self, wallet_address: str, token_address: str) -> Optional[Dict]:
         try:
-            balance_data = await self.mcp_client.get_token_balance(wallet_address, token_address)
+            balance_data = await self.rpc_client.get_token_balance(wallet_address, token_address)
             balance = float(balance_data.get("formatted", 0))
             
             current_time = datetime.now()
@@ -112,9 +112,9 @@ class BalanceMonitor:
                     priority=priority,
                     timestamp=time.time()
                 )
-                
-                # Schedule async publish
-                asyncio.create_task(self.event_bus.publish(event))
+                if self.event_bus:
+                    # Schedule async publish
+                    asyncio.create_task(self.event_bus.publish(event))
                 
         except Exception as e:
             print(f"Error publishing balance change event: {e}")

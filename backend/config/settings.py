@@ -1,12 +1,12 @@
-from mcp import StdioServerParameters
-
 STABLECOIN_ADDRESSES = {
     "USDC": "0x3894085ef7ff0f0aedf52e2a2704928d1ec074f1",
 }
 
-NETWORK = "sei"
+# RPC Configuration
+SEI_RPC_URL = "https://evm-rpc.sei-apis.com"
 POLL_INTERVAL = 5
 USDC_DECIMALS = 6
+NETWORK = "sei"
 
 WHALE_SINGLE_TX_THRESHOLD = 100.0
 WHALE_VOLUME_THRESHOLD = 500000.0
@@ -23,8 +23,8 @@ AI_ANALYSIS_ENABLED = False  # For Phase 1, will be enabled in Phase 2
 EVENT_QUEUE_MAX_SIZE = 1000
 EVENT_PROCESSING_TIMEOUT = 30
 
-SERVER_PARAMS = StdioServerParameters(
-    command="npx",
-    args=["-y", "@sei-js/mcp-server"],
-    env=None,
-)
+# SERVER_PARAMS = StdioServerParameters(
+#     command="npx",
+#     args=["-y", "@sei-js/mcp-server"],
+#     env=None,
+# )

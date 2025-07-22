@@ -1,4 +1,4 @@
-from core.mcp_client import MCPClient
+from core.rpc_client import RPCClient
 from watcher.transaction_analyzer import TransactionAnalyzer
 from watcher.whale_tracker import WhaleTracker
 from watcher.balance_monitor import BalanceMonitor
@@ -6,11 +6,11 @@ from core.utils import format_whale_event
 from config.settings import BALANCE_MONITORING_ENABLED, BALANCE_CHECK_INTERVAL_BLOCKS, EVENT_BUS_ENABLED, EVENT_BUS_AUTO_START
 
 class BlockProcessor:
-    def __init__(self, mcp_client: MCPClient):
-        self.mcp_client = mcp_client
+    def __init__(self, rpc_client: RPCClient):
+        self.rpc_client = rpc_client
         self.transaction_analyzer = TransactionAnalyzer()
         self.whale_tracker = WhaleTracker()
-        self.balance_monitor = BalanceMonitor(mcp_client)
+        self.balance_monitor = BalanceMonitor(rpc_client)
         self.last_block_number = None
         self.blocks_since_balance_check = 0
         self.event_bus = None
@@ -50,20 +50,20 @@ class BlockProcessor:
             print("Event bus processing stopped")
     
     async def get_latest_block_number(self):
-        latest_block_data = await self.mcp_client.get_latest_block()
+        latest_block_data = await self.rpc_client.get_latest_block()
         return int(latest_block_data["number"])
     
     async def process_block(self, block_number):
         print(f"Processing block: {block_number}")
-        block_data = await self.mcp_client.get_block_by_number(block_number)
-        tx_hashes = block_data.get("transactions", [])
+        block_data = await self.rpc_client.get_block_by_number(block_number)
+        txs = block_data.get("transactions", [])
         
         all_transfers = []
         whale_events = []
-        for tx_hash in tx_hashes:
-            receipt_data = await self.mcp_client.get_transaction_receipt(tx_hash)
+        for tx in txs:
+            receipt_data = await self.rpc_client.get_transaction_receipt(tx["hash"])
             logs = receipt_data.get("logs", [])
-            transfers = self.transaction_analyzer.analyze_transaction_logs(logs, tx_hash)
+            transfers = self.transaction_analyzer.analyze_transaction_logs(logs, tx["hash"])
             all_transfers.extend(transfers)
             
             for transfer in transfers:
